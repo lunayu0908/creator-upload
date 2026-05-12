@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>素材上傳</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0e0e0f;
+    --surface: #161618;
+    --surface2: #1e1e21;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.2);
+    --text: #f0ede8;
+    --muted: #a0a0a6;
+    --accent: #00D2BE;
+    --accent-dim: rgba(0,210,190,0.12);
+    --accent-dim2: rgba(0,210,190,0.06);
+    --red: #ff5f5f;
+    --red-dim: rgba(255,95,95,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Header */
+  .header {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .header-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Search bar */
+  .search-wrap {
+    padding: 20px 24px 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: var(--border-hover);
+  }
+  .search-icon {
+    color: var(--muted);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .search-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    width: 100%;
+  }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px 0;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .step.active { color: var(--accent); }
+  .step.done { color: var(--muted); }
+  .step-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .step.active .step-dot { background: var(--accent); }
+  .step.done .step-dot { background: var(--muted); }
+  .step-sep { color: var(--border-hover); font-size: 10px; }
+
+  /* Section title */
+  .section-head {
+    padding: 20px 24px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    font-family: 'DM Mono', monospace;
+  }
+  .count-badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+  .count-badge span {
+    color: var(--accent);
+  }
+
+  /* Demand cards */
+  .cards {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .card-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .checkbox {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border-hover);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .card.selected .checkbox {
+    background: #00D2BE;
+    border-color: #00D2BE;
+  }
+  .checkbox svg { display: none; }
+  .card.selected .checkbox svg { display: block; }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-streamer {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-client {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .deadline-pill {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .deadline-ok { background: var(--accent-dim); color: var(--accent); }
+  .deadline-warn { background: rgba(255,165,0,0.12); color: #ffa500; }
+  .deadline-urgent { background: var(--red-dim); color: var(--red); }
+
+  .expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, transform 0.2s;
+    flex-shrink: 0;
+  }
+  .expand-btn:hover { color: var(--text); }
+  .card.open .expand-btn { transform: rotate(180deg); color: var(--accent); }
+
+  .card-copy {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s;
+    opacity: 0;
+  }
+  .card.open .card-copy {
+    max-height: 300px;
+    opacity: 1;
+  }
+  .card-copy-inner {
+    margin: 0 16px 14px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 2px solid var(--accent);
+  }
+  .copy-label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom:6px;
+  }
+  .copy-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .copy-meta {
+    margin-top: 8px;
+    display: flex;
+    gap: 16px;
+  }
+  .copy-meta-item {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .copy-meta-item span { color: #a0a0a6; }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 13px;
+    display: none;
+  }
+  .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+
+  /* Upload section */
+  .upload-section {
+    margin: 24px 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: opacity 0.3s;
+  }
+  .upload-section.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .upload-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .upload-title {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .selected-count {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+  }
+
+  .drop-zone {
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1.5px dashed var(--border);
+    margin: 12px;
+    border-radius: 8px;
+  }
+  .drop-zone:hover, .drop-zone.drag { background: var(--accent-dim2); border-color: var(--accent); }
+  .drop-icon { font-size: 22px; margin-bottom: 8px; color: var(--muted); }
+  .drop-text { font-size: 13px; color: var(--muted); }
+  .drop-hint { font-size: 11px; color: var(--muted); margin-top:4px; opacity:0.6; }
+
+  .file-list {
+    padding: 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .file-icon { font-size: 14px; flex-shrink: 0; }
+  .file-name { flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .file-rm { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 2px; flex-shrink:0; }
+  .file-rm:hover { color: var(--red); }
+
+  /* Submit */
+  .submit-wrap { padding: 20px 16px 0; }
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: #00D2BE;
+    color: #0e0e0f;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .submit-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+  .submit-btn:not(:disabled):hover { opacity: 0.9; }
+  .submit-btn:not(:disabled):active { transform: scale(0.99); }
+
+  /* Success screen */
+  .success-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 2rem;
+    text-align: center;
+  }
+  .success-screen.show { display: flex; }
+  .main-content.hidden { display: none; }
+
+  .success-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 1.5px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .success-title { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .success-detail {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    width: 100%;
+    max-width: 320px;
+    text-align: left;
+  }
+  .success-detail-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+  .success-detail-row .key { color: var(--muted); font-family: 'DM Mono', monospace; }
+  .success-detail-row .val { color: var(--text); font-weight: 500; }
+  .again-btn {
+    margin-top: 20px;
+    background: none;
+    border: 1px solid var(--border-hover);
+    color: var(--muted);
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .again-btn:hover { color: var(--text); border-color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="main-content" id="mainContent">
+  <div class="header">
+    <div class="header-title">UPLOAD</div>
+    <div class="header-sub">素材上傳系統</div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input class="search-input" type="text" id="searchInput" placeholder="搜尋主播名稱…" oninput="filterCards()">
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step1"><div class="step-dot"></div>選擇需求</div>
+    <div class="step-sep">›</div>
+    <div class="step" id="step2"><div class="step-dot"></div>上傳素材</div>
+    <div class="step-sep">›</div>
+    <div class="step" id="step3"><div class="step-dot"></div>完成</div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">待處理需求</div>
+    <div class="count-badge">已選 <span id="selCount">0</span> / <span id="totalCount">0</span></div>
+  </div>
+
+  <div class="cards" id="cardList"></div>
+  <div class="empty" id="emptyState"><div class="empty-icon">◎</div>找不到符合的需求</div>
+
+  <div class="upload-section disabled" id="uploadSection">
+    <div class="upload-header">
+      <div class="upload-title">上傳素材</div>
+      <div class="selected-count" id="selLabel">請先選擇需求</div>
+    </div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="drop-icon">↑</div>
+      <div class="drop-text">點擊或拖曳檔案至此</div>
+      <div class="drop-hint">JPG · PNG · MP4 · GIF · PDF</div>
+    </div>
+    <input type="file" id="fileInput" style="display:none" multiple accept="image/*,video/*,.pdf,.gif" onchange="addFiles(this.files)">
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" id="submitBtn" disabled onclick="submit()">送出素材</button>
+  </div>
+</div>
+
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D2BE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div class="success-title">素材已送出</div>
+  <div class="success-sub">感謝您，我們已收到您的素材<br>如有需要我們會再與您聯繫</div>
+  <div class="success-detail" id="successDetail"></div>
+  <button class="again-btn" onclick="reset()">繼續上傳其他素材</button>
+</div>
+
+<script>
+// ── 假資料（之後串 n8n Webhook 替換） ──────────────────────────
+const DEMANDS = [
+  {
+    id: 'd001',
+    streamer: '50rabbit_150',
+    client: 'mshieh8888',
+    type: '訂製禮物 Gift',
+    copy: '來看兔兔幫 拳頭硬椰椰',
+    deadline: '2026-05-14',
+    daysLeft: 2
+  },
+  {
+    id: 'd002',
+    streamer: 'pinksweetbaby',
+    client: 'tonnyhung',
+    type: '直播廣告欄位',
+    copy: '葵葵帶你飛 ～飛高高哦～^_^',
+    deadline: '2026-05-16',
+    daysLeft: 4
+  },
+  {
+    id: 'd003',
+    streamer: '50rabbit_150',
+    client: 'user_88321',
+    type: '開台宣傳',
+    copy: '今晚十點不見不散！兔兔要來大亂鬥囉',
+    deadline: '2026-05-13',
+    daysLeft: 1
+  },
+  {
+    id: 'd004',
+    streamer: 'coco_live',
+    client: 'bigspender_vip',
+    type: '週年特別活動',
+    copy: 'COCO一週年感謝祭，一起來慶祝！',
+    deadline: '2026-05-20',
+    daysLeft: 8
+  },
+  {
+    id: 'd005',
+    streamer: 'pinksweetbaby',
+    client: 'whale_007',
+    type: '限定連麥活動',
+    copy: '粉粉的夢幻連麥，今晚九點開始！',
+    deadline: '2026-05-12',
+    daysLeft: 0
+  }
+];
+// ─────────────────────────────────────────────────────────────
+
+let selected = new Set();
+let files = [];
+let filtered = [...DEMANDS];
+
+function deadlinePill(d) {
+  if (d.daysLeft <= 1) return `<span class="deadline-pill deadline-urgent">今明截止</span>`;
+  if (d.daysLeft <= 3) return `<span class="deadline-pill deadline-warn">${d.daysLeft}天後截止</span>`;
+  return `<span class="deadline-pill deadline-ok">${d.daysLeft}天後截止</span>`;
+}
+
+function renderCards() {
+  const list = document.getElementById('cardList');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('totalCount').textContent = filtered.length;
+
+  if (!filtered.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filtered.map(d => `
+    <div class="card${selected.has(d.id) ? ' selected' : ''}" id="card-${d.id}" onclick="toggleCard('${d.id}', event)">
+      <div class="card-main">
+        <div class="checkbox">
+          <svg width="11" height="8" viewBox="0 0 11 8" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 4 7 10 1"/></svg>
+        </div>
+        <div class="card-info">
+          <div class="card-streamer">
+            ${d.streamer}
+            ${deadlinePill(d)}
+          </div>
+          <div class="card-client">${d.client} · ${d.type}</div>
+        </div>
+        <button class="expand-btn" onclick="toggleExpand('${d.id}', event)" aria-label="展開文案">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="3 5 7 9 11 5"/></svg>
+        </button>
+      </div>
+      <div class="card-copy" id="copy-${d.id}">
+        <div class="card-copy-inner">
+          <div class="copy-label">文案內容</div>
+          <div class="copy-text">${d.copy}</div>
+          <div class="copy-meta">
+            <div class="copy-meta-item"><span>截止</span> ${d.deadline}</div>
+            <div class="copy-meta-item"><span>類型</span> ${d.type}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCard(id, e) {
+  if (e.target.closest('.expand-btn')) return;
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  updateUI();
+  renderCards();
+}
+
+function toggleExpand(id, e) {
+  e.stopPropagation();
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('open');
+}
+
+function filterCards() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  filtered = q ? DEMANDS.filter(d =>
+    d.streamer.toLowerCase().includes(q) ||
+    d.client.toLowerCase().includes(q)
+  ) : [...DEMANDS];
+  renderCards();
+}
+
+function updateUI() {
+  const n = selected.size;
+  document.getElementById('selCount').textContent = n;
+  const uploadSec = document.getElementById('uploadSection');
+  const selLabel = document.getElementById('selLabel');
+
+  if (n > 0) {
+    uploadSec.classList.remove('disabled');
+    const names = [...selected].map(id => DEMANDS.find(d => d.id === id)?.streamer).filter(Boolean);
+    selLabel.textContent = names.join('、');
+    document.getElementById('step2').classList.add('active');
+  } else {
+    uploadSec.classList.add('disabled');
+    selLabel.textContent = '請先選擇需求';
+    document.getElementById('step2').classList.remove('active');
+  }
+  checkSubmit();
+}
+
+function addFiles(fl) {
+  for (const f of fl) {
+    if (!files.find(x => x.name === f.name)) files.push(f);
+  }
+  renderFiles();
+  checkSubmit();
+}
+
+function renderFiles() {
+  document.getElementById('fileList').innerHTML = files.map((f, i) => `
+    <div class="file-item">
+      <span class="file-icon">${fileIcon(f.name)}</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${fmt(f.size)}</span>
+      <button class="file-rm" onclick="rmFile(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼';
+  if (['mp4','mov','avi'].includes(ext)) return '🎬';
+  if (ext === 'pdf') return '📄';
+  return '📁';
+}
+
+function fmt(s) {
+  return s > 1048576 ? (s/1048576).toFixed(1) + 'MB' : Math.round(s/1024) + 'KB';
+}
+
+function rmFile(i) {
+  files.splice(i, 1);
+  renderFiles();
+  checkSubmit();
+}
+
+function checkSubmit() {
+  document.getElementById('submitBtn').disabled = !(selected.size > 0 && files.length > 0);
+}
+
+function submit() {
+  const sel = [...selected].map(id => DEMANDS.find(d => d.id === id)).filter(Boolean);
+  const detail = document.getElementById('successDetail');
+  detail.innerHTML = `
+    <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
+    <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
+    <div class="success-detail-row"><span class="key">檔案數量</span><span class="val">${files.length} 個</span></div>
+    <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+  `;
+  document.getElementById('mainContent').classList.add('hidden');
+  document.getElementById('successScreen').classList.add('show');
+  document.getElementById('step3').classList.add('active');
+}
+
+function reset() {
+  selected.clear();
+  files = [];
+  filtered = [...DEMANDS];
+  document.getElementById('searchInput').value = '';
+  document.getElementById('mainContent').classList.remove('hidden');
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.remove('active');
+  updateUI();
+  renderCards();
+}
+
+// Drag & drop
+const dz = document.getElementById('dropZone');
+dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); };
+dz.ondragleave = () => dz.classList.remove('drag');
+dz.ondrop = e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); };
+
+// Init
+renderCards();
+</script>
+</body>
+</html>
