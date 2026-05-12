@@ -455,9 +455,9 @@
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
       <div class="drop-icon">↑</div>
       <div class="drop-text">點擊或拖曳檔案至此</div>
-      <div class="drop-hint">JPG · PNG · MP4 · GIF · PDF</div>
+      <div class="drop-hint">JPG · PNG · GIF · WEBP · HEIC</div>
     </div>
-    <input type="file" id="fileInput" style="display:none" multiple accept="image/*,video/*,.pdf,.gif" onchange="addFiles(this.files)">
+    <input type="file" id="fileInput" style="display:none" multiple accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif" onchange="addFiles(this.files)">
     <div class="file-list" id="fileList"></div>
   </div>
 
@@ -477,54 +477,30 @@
 </div>
 
 <script>
-// ── 假資料（之後串 n8n Webhook 替換） ──────────────────────────
-const DEMANDS = [
-  {
-    id: 'd001',
-    streamer: '50rabbit_150',
-    client: 'mshieh8888',
-    type: '訂製禮物 Gift',
-    copy: '來看兔兔幫 拳頭硬椰椰',
-    deadline: '2026-05-14',
-    daysLeft: 2
-  },
-  {
-    id: 'd002',
-    streamer: 'pinksweetbaby',
-    client: 'tonnyhung',
-    type: '直播廣告欄位',
-    copy: '葵葵帶你飛 ～飛高高哦～^_^',
-    deadline: '2026-05-16',
-    daysLeft: 4
-  },
-  {
-    id: 'd003',
-    streamer: '50rabbit_150',
-    client: 'user_88321',
-    type: '開台宣傳',
-    copy: '今晚十點不見不散！兔兔要來大亂鬥囉',
-    deadline: '2026-05-13',
-    daysLeft: 1
-  },
-  {
-    id: 'd004',
-    streamer: 'coco_live',
-    client: 'bigspender_vip',
-    type: '週年特別活動',
-    copy: 'COCO一週年感謝祭，一起來慶祝！',
-    deadline: '2026-05-20',
-    daysLeft: 8
-  },
-  {
-    id: 'd005',
-    streamer: 'pinksweetbaby',
-    client: 'whale_007',
-    type: '限定連麥活動',
-    copy: '粉粉的夢幻連麥，今晚九點開始！',
-    deadline: '2026-05-12',
-    daysLeft: 0
+// ── 資料來源：從 n8n Webhook 抓取 ──────────────────────────────
+const N8N_GET_DEMANDS_URL = 'YOUR_N8N_WEBHOOK_URL_HERE'; // 之後填入 n8n Webhook URL
+
+let DEMANDS = [];
+
+async function loadDemands() {
+  try {
+    const res = await fetch(N8N_GET_DEMANDS_URL);
+    const data = await res.json();
+    DEMANDS = data.map(d => ({
+      id: d.id,
+      streamer: d.streamer,
+      client: d.client,
+      type: d.type,
+      copy: d.copy,
+      deadline: d.deadline,
+      daysLeft: Math.ceil((new Date(d.deadline) - new Date()) / 86400000)
+    }));
+  } catch (e) {
+    DEMANDS = [];
   }
-];
+  filtered = [...DEMANDS];
+  renderCards();
+}
 // ─────────────────────────────────────────────────────────────
 
 let selected = new Set();
@@ -643,10 +619,8 @@ function renderFiles() {
 
 function fileIcon(name) {
   const ext = name.split('.').pop().toLowerCase();
-  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼';
-  if (['mp4','mov','avi'].includes(ext)) return '🎬';
-  if (ext === 'pdf') return '📄';
-  return '📁';
+  if (['jpg','jpeg','png','gif','webp','heic','heif'].includes(ext)) return '🖼';
+  return '🖼';
 }
 
 function fmt(s) {
@@ -698,7 +672,7 @@ dz.ondragleave = () => dz.classList.remove('drag');
 dz.ondrop = e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(e.dataTransfer.files); };
 
 // Init
-renderCards();
+loadDemands();
 </script>
 </body>
 </html>
