@@ -155,11 +155,11 @@ function calcDeadline(createdAt) {
 
 // ── 示範資料（串接 n8n 後自動替換）────────────────────────────
 const ALL_DEMANDS = [
-  { id:'d001', streamer:'50rabbit_150', token:'rabbit_a8f3k', client:'mshieh8888', type:'訂製禮物 Gift', copy:'來看兔兔幫 拳頭硬椰椰', createdAt: daysAgo(2), status:'pending' },
-  { id:'d002', streamer:'pinksweetbaby', token:'pink_j2m9x', client:'tonnyhung', type:'直播廣告欄位', copy:'葵葵帶你飛 ～飛高高哦～^_^', createdAt: daysAgo(1), status:'pending' },
-  { id:'d003', streamer:'50rabbit_150', token:'rabbit_a8f3k', client:'user_88321', type:'開台宣傳', copy:'今晚十點不見不散！兔兔要來大亂鬥囉', createdAt: daysAgo(4), status:'done' },
-  { id:'d004', streamer:'coco_live', token:'coco_p5q1z', client:'bigspender_vip', type:'週年特別活動', copy:'COCO一週年感謝祭，一起來慶祝！', createdAt: daysAgo(0), status:'pending' },
-  { id:'d005', streamer:'pinksweetbaby', token:'pink_j2m9x', client:'whale_007', type:'限定連麥活動', copy:'粉粉的夢幻連麥，今晚九點開始！', createdAt: daysAgo(3), status:'pending' }
+  { id:'d001', streamer:'50rabbit_150', token:'50rabbit_150', client:'mshieh8888', type:'訂製禮物 Gift', copy:'來看兔兔幫 拳頭硬椰椰', createdAt: daysAgo(2), status:'pending' },
+  { id:'d002', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'tonnyhung', type:'直播廣告欄位', copy:'葵葵帶你飛 ～飛高高哦～^_^', createdAt: daysAgo(1), status:'pending' },
+  { id:'d003', streamer:'50rabbit_150', token:'50rabbit_150', client:'user_88321', type:'開台宣傳', copy:'今晚十點不見不散！兔兔要來大亂鬥囉', createdAt: daysAgo(4), status:'done' },
+  { id:'d004', streamer:'coco_live', token:'coco_live', client:'bigspender_vip', type:'週年特別活動', copy:'COCO一週年感謝祭，一起來慶祝！', createdAt: daysAgo(0), status:'pending' },
+  { id:'d005', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'whale_007', type:'限定連麥活動', copy:'粉粉的夢幻連麥，今晚九點開始！', createdAt: daysAgo(3), status:'pending' }
 ].map(d => ({ ...d, deadline: calcDeadline(d.createdAt) }));
 // ─────────────────────────────────────────────────────────────
 
