@@ -415,6 +415,14 @@
   }
   .again-btn:hover { color: var(--text); border-color: var(--text); }
 
+  /* 備注欄位 */
+  .note-wrap { padding: 0 12px 14px; }
+  .note-label { display:block; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); margin-bottom:6px; letter-spacing:0.06em; }
+  .note-optional { font-size:11px; color:var(--muted); opacity:0.6; margin-left:6px; }
+  .note-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; font-family:'Noto Sans TC',sans-serif; color:var(--text); resize:vertical; min-height:80px; outline:none; transition:border-color 0.2s; line-height:1.6; }
+  .note-input::placeholder { color:var(--muted); opacity:0.6; }
+  .note-input:focus { border-color:var(--border-hover); }
+
   /* 無效連結畫面 */
   .invalid-screen {
     display: none;
@@ -493,6 +501,10 @@
     </div>
     <input type="file" id="fileInput" style="display:none" multiple accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif" onchange="addFiles(this.files)">
     <div class="file-list" id="fileList"></div>
+    <div class="note-wrap">
+      <label class="note-label">備注 <span class="note-optional">選填</span></label>
+      <textarea class="note-input" id="noteInput" placeholder="例如：圖片不要蓋到頭部、標語放在胸口下方、左肩加小圖案…"></textarea>
+    </div>
   </div>
 
   <div class="submit-wrap">
@@ -748,6 +760,7 @@ function submit() {
   for (const demand of sel) {
     for (const file of files) {
       const formData = new FormData();
+      const note = document.getElementById('noteInput').value.trim();
       formData.append('file', file);
       formData.append('streamer_id', demand.streamer);
       formData.append('req_id', demand.id);
@@ -756,6 +769,7 @@ function submit() {
       formData.append('copy', demand.copy);
       formData.append('deadline', demand.deadline);
       formData.append('file_name', file.name);
+      formData.append('note', note);
       uploads.push(fetch(N8N_WEBHOOK, { method: 'POST', body: formData }));
     }
   }
@@ -784,7 +798,8 @@ function reset() {
   selected.clear();
   files = [];
   filtered = [...DEMANDS];
-  document.getElementById('searchInput').value = '';
+  document.getElementById('searchInput') && (document.getElementById('searchInput').value = '');
+  document.getElementById('noteInput').value = '';
   document.getElementById('mainContent').classList.remove('hidden');
   document.getElementById('successScreen').classList.remove('show');
   document.getElementById('step1').classList.add('active');
