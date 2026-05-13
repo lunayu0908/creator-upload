@@ -414,6 +414,39 @@
     transition: color 0.2s, border-color 0.2s;
   }
   .again-btn:hover { color: var(--text); border-color: var(--text); }
+
+  /* 無效連結畫面 */
+  .invalid-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+  }
+  .invalid-screen.show { display: flex; }
+  .invalid-icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--red-dim);
+    border: 1.5px solid var(--red);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .invalid-title { font-size: 18px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+  .invalid-sub { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
+  /* header 主播名稱 */
+  .header-streamer {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: auto;
+    padding: 4px 10px;
+    border: 0.5px solid var(--border-hover);
+    border-radius: 20px;
+  }
 </style>
 </head>
 <body>
@@ -422,6 +455,7 @@
   <div class="header">
     <div class="header-title">UPLOAD</div>
     <div class="header-sub">素材上傳系統</div>
+    <div class="header-streamer" id="headerStreamer"></div>
   </div>
 
   <div class="search-wrap">
@@ -445,7 +479,7 @@
   </div>
 
   <div class="cards" id="cardList"></div>
-  <div class="empty" id="emptyState"><div class="empty-icon">◎</div>找不到符合的需求</div>
+  <div class="empty" id="emptyState"><div class="empty-icon">◎</div>目前沒有待處理的需求</div>
 
   <div class="upload-section disabled" id="uploadSection">
     <div class="upload-header">
@@ -476,80 +510,92 @@
   <button class="again-btn" onclick="reset()">繼續上傳其他素材</button>
 </div>
 
+<div class="invalid-screen" id="invalidScreen">
+  <div class="invalid-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff5f5f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </div>
+  <div class="invalid-title">連結無效</div>
+  <div class="invalid-sub">此連結已失效或不存在<br>請聯繫工作人員取得新的上傳連結</div>
+</div>
+
 <script>
+// ── 截止日邏輯：需求建立日 + 5 天 ────────────────────────────
+const DEADLINE_DAYS = 5;
+const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
+function calcDeadline(createdAt) {
+  const d = new Date(createdAt);
+  d.setDate(d.getDate() + DEADLINE_DAYS);
+  return d.toISOString().split('T')[0];
+}
+function calcDaysLeft(createdAt) {
+  return Math.ceil((new Date(calcDeadline(createdAt)) - new Date()) / 86400000);
+}
+
 // ── 示範資料（串接 n8n 後會自動替換） ────────────────────────
 const DEMO_DEMANDS = [
-  {
-    id: 'd001',
-    streamer: '50rabbit_150',
-    client: 'mshieh8888',
-    type: '訂製禮物 Gift',
-    copy: '來看兔兔幫 拳頭硬椰椰',
-    deadline: '2026-05-20',
-    daysLeft: 8
-  },
-  {
-    id: 'd002',
-    streamer: 'pinksweetbaby',
-    client: 'tonnyhung',
-    type: '直播廣告欄位',
-    copy: '葵葵帶你飛 ～飛高高哦～^_^',
-    deadline: '2026-05-22',
-    daysLeft: 10
-  },
-  {
-    id: 'd003',
-    streamer: '50rabbit_150',
-    client: 'user_88321',
-    type: '開台宣傳',
-    copy: '今晚十點不見不散！兔兔要來大亂鬥囉',
-    deadline: '2026-05-14',
-    daysLeft: 2
-  },
-  {
-    id: 'd004',
-    streamer: 'coco_live',
-    client: 'bigspender_vip',
-    type: '週年特別活動',
-    copy: 'COCO一週年感謝祭，一起來慶祝！',
-    deadline: '2026-05-25',
-    daysLeft: 13
-  },
-  {
-    id: 'd005',
-    streamer: 'pinksweetbaby',
-    client: 'whale_007',
-    type: '限定連麥活動',
-    copy: '粉粉的夢幻連麥，今晚九點開始！',
-    deadline: '2026-05-13',
-    daysLeft: 1
-  }
-];
+  { id:'d001', streamer:'50rabbit_150', token:'50rabbit_150', client:'mshieh8888', type:'訂製禮物 Gift', copy:'來看兔兔幫 拳頭硬椰椰', createdAt: daysAgo(2) },
+  { id:'d002', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'tonnyhung', type:'直播廣告欄位', copy:'葵葵帶你飛 ～飛高高哦～^_^', createdAt: daysAgo(1) },
+  { id:'d003', streamer:'50rabbit_150', token:'50rabbit_150', client:'user_88321', type:'開台宣傳', copy:'今晚十點不見不散！兔兔要來大亂鬥囉', createdAt: daysAgo(4) },
+  { id:'d004', streamer:'coco_live', token:'coco_live', client:'bigspender_vip', type:'週年特別活動', copy:'COCO一週年感謝祭，一起來慶祝！', createdAt: daysAgo(0) },
+  { id:'d005', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'whale_007', type:'限定連麥活動', copy:'粉粉的夢幻連麥，今晚九點開始！', createdAt: daysAgo(3) }
+].map(d => ({ ...d, deadline: calcDeadline(d.createdAt), daysLeft: calcDaysLeft(d.createdAt) }));
+// ─────────────────────────────────────────────────────────────
 
 const N8N_GET_DEMANDS_URL = ''; // 串接 n8n 後填入 Webhook URL
 
 let DEMANDS = [];
+let CURRENT_TOKEN = '';
+let CURRENT_STREAMER = '';
+
+// 讀取網址中的 token
+function getTokenFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('token') || '';
+}
 
 async function loadDemands() {
+  CURRENT_TOKEN = getTokenFromURL();
+
+  // 沒有 token → 顯示無效連結畫面
+  if (!CURRENT_TOKEN) {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('invalidScreen').classList.add('show');
+    return;
+  }
+
+  let allDemands = [];
+
   if (N8N_GET_DEMANDS_URL) {
     try {
-      const res = await fetch(N8N_GET_DEMANDS_URL);
+      const res = await fetch(`${N8N_GET_DEMANDS_URL}?token=${CURRENT_TOKEN}`);
       const data = await res.json();
-      DEMANDS = data.map(d => ({
-        id: d.id,
-        streamer: d.streamer,
-        client: d.client,
-        type: d.type,
-        copy: d.copy,
-        deadline: d.deadline,
+      allDemands = data.map(d => ({
+        ...d,
         daysLeft: Math.ceil((new Date(d.deadline) - new Date()) / 86400000)
       }));
     } catch (e) {
-      DEMANDS = DEMO_DEMANDS;
+      allDemands = DEMO_DEMANDS;
     }
   } else {
-    DEMANDS = DEMO_DEMANDS;
+    allDemands = DEMO_DEMANDS;
   }
+
+  // 只篩選出對應 token 的主播需求
+  DEMANDS = allDemands.filter(d => d.token === CURRENT_TOKEN);
+
+  // token 不存在或無對應需求 → 顯示無效連結
+  if (DEMANDS.length === 0 && N8N_GET_DEMANDS_URL) {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('invalidScreen').classList.add('show');
+    return;
+  }
+
+  // 取得主播名稱顯示在 header
+  if (DEMANDS.length > 0) {
+    CURRENT_STREAMER = DEMANDS[0].streamer;
+    document.getElementById('headerStreamer').textContent = CURRENT_STREAMER;
+  }
+
   filtered = [...DEMANDS];
   renderCards();
 }
