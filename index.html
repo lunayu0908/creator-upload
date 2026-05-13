@@ -737,16 +737,47 @@ function checkSubmit() {
 
 function submit() {
   const sel = [...selected].map(id => DEMANDS.find(d => d.id === id)).filter(Boolean);
-  const detail = document.getElementById('successDetail');
-  detail.innerHTML = `
-    <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
-    <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
-    <div class="success-detail-row"><span class="key">檔案數量</span><span class="val">${files.length} 個</span></div>
-    <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
-  `;
-  document.getElementById('mainContent').classList.add('hidden');
-  document.getElementById('successScreen').classList.add('show');
-  document.getElementById('step3').classList.add('active');
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '上傳中…';
+
+  const N8N_WEBHOOK = 'https://swagtalents.app.n8n.cloud/webhook/f8578d8c-41f7-41cd-83df-7c7e4d8d7dfc';
+
+  // 每個選取的需求 × 每個檔案都各送一次
+  const uploads = [];
+  for (const demand of sel) {
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('streamer_id', demand.streamer);
+      formData.append('req_id', demand.id);
+      formData.append('client', demand.client);
+      formData.append('type', demand.type);
+      formData.append('copy', demand.copy);
+      formData.append('deadline', demand.deadline);
+      formData.append('file_name', file.name);
+      uploads.push(fetch(N8N_WEBHOOK, { method: 'POST', body: formData }));
+    }
+  }
+
+  Promise.all(uploads)
+    .then(() => {
+      const detail = document.getElementById('successDetail');
+      detail.innerHTML = `
+        <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
+        <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
+        <div class="success-detail-row"><span class="key">檔案數量</span><span class="val">${files.length} 個</span></div>
+        <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+      `;
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('successScreen').classList.add('show');
+      document.getElementById('step3').classList.add('active');
+    })
+    .catch(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '送出素材';
+      alert('上傳失敗，請稍後再試');
+    });
 }
 
 function reset() {
