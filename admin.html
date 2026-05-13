@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>素材管理後台</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
 
@@ -94,16 +95,58 @@ td{padding:12px 12px;vertical-align:middle}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--accent);font-family:'DM Mono',monospace;transition:transform 0.3s;z-index:100;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-/* Empty */
-.empty-row td{text-align:center;padding:48px;color:var(--muted);font-size:13px}
+/* 登入畫面 */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;background:var(--bg)}
+.login-logo{font-family:'DM Mono',monospace;font-size:22px;color:var(--accent);letter-spacing:0.1em;margin-bottom:8px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px}
+.login-title{font-size:16px;font-weight:500;margin-bottom:6px}
+.login-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:12px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.denied-box{display:none;background:var(--red-dim);border:1px solid var(--red);border-radius:10px;padding:14px 16px;margin-top:16px;font-size:13px;color:var(--red);line-height:1.6}
+
+/* 主內容隱藏直到登入 */
+.app-content{display:none}
 </style>
 </head>
 <body>
+
+<!-- 登入畫面 -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">ADMIN</div>
+  <div class="login-sub">素材管理後台</div>
+  <div class="login-card">
+    <div class="login-title">員工登入</div>
+    <div class="login-desc">請使用 swag.live 帳號登入<br>僅限授權員工存取</div>
+    <div id="g_id_onload"
+      data-client_id="618647159770-c5fg6aqb2ou9uu6rgl0lq0koqiuqcoua.apps.googleusercontent.com"
+      data-callback="handleCredential"
+      data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-size="large"
+      data-theme="outline"
+      data-text="sign_in_with"
+      data-shape="rectangular"
+      data-logo_alignment="left"
+      data-width="296">
+    </div>
+    <div class="denied-box" id="deniedBox">
+      ⚠️ 此帳號無存取權限<br>請使用 <strong>@swag.live</strong> 信箱登入
+    </div>
+  </div>
+</div>
+
+<!-- 主內容（登入後顯示）-->
+<div class="app-content" id="appContent">
 
 <div class="header">
   <div class="header-title">ADMIN</div>
   <div class="header-sub">素材管理後台</div>
   <div class="header-badge" id="lastUpdate">載入中…</div>
+  <div class="header-badge" id="userEmail" style="margin-left:8px;color:var(--accent)"></div>
 </div>
 
 <div class="toolbar">
@@ -281,6 +324,38 @@ function showToast() {
 }
 
 renderTable();
+
+// ── Google OAuth 驗證 ─────────────────────────────────────────
+const ALLOWED_DOMAIN = 'swag.live';
+const CLIENT_ID = '618647159770-c5fg6aqb2ou9uu6rgl0lq0koqiuqcoua.apps.googleusercontent.com';
+
+function handleCredential(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const email = payload.email || '';
+  const domain = email.split('@')[1] || '';
+
+  if (domain !== ALLOWED_DOMAIN) {
+    document.getElementById('deniedBox').style.display = 'block';
+    return;
+  }
+
+  // 驗證通過 → 隱藏登入畫面，顯示主內容
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('userEmail').textContent = email;
+}
+
+// 頁面載入時檢查是否已登入（session storage）
+window.onload = function() {
+  const savedEmail = sessionStorage.getItem('adminEmail');
+  if (savedEmail && savedEmail.endsWith('@' + ALLOWED_DOMAIN)) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
+    document.getElementById('userEmail').textContent = savedEmail;
+  }
+};
+// ─────────────────────────────────────────────────────────────
 </script>
+</div><!-- end app-content -->
 </body>
 </html>
