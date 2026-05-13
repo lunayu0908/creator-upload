@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>素材管理後台</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0e0e0f;
+  --surface: #161618;
+  --surface2: #1e1e21;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.15);
+  --text: #f0ede8;
+  --muted: #c0bfc4;
+  --accent: #00D2BE;
+  --accent-dim: rgba(0,210,190,0.12);
+  --accent-dim2: rgba(0,210,190,0.06);
+  --red: #ff5f5f;
+  --red-dim: rgba(255,95,95,0.1);
+  --amber: #ffa500;
+  --amber-dim: rgba(255,165,0,0.1);
+  --green: #00D2BE;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-weight:300;min-height:100vh}
+
+/* Header */
+.header{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.header-title{font-family:'DM Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:0.08em}
+.header-sub{font-size:14px;color:var(--muted)}
+.header-badge{margin-left:auto;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--surface);border:0.5px solid var(--border-hover);padding:4px 12px;border-radius:20px}
+
+/* Toolbar */
+.toolbar{padding:16px 24px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex:1;min-width:180px;transition:border-color 0.2s}
+.search-box:focus-within{border-color:var(--border-hover)}
+.search-icon{color:var(--muted);font-size:13px}
+.search-input{background:none;border:none;outline:none;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;width:100%}
+.search-input::placeholder{color:var(--muted)}
+.filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim2)}
+
+/* Stats row */
+.stats{display:flex;gap:1px;padding:0 24px;margin:16px 0 0}
+.stat{background:var(--surface);flex:1;padding:14px 16px;first-child{border-radius:8px 0 0 8px};last-child{border-radius:0 8px 8px 0}}
+.stat:first-child{border-radius:8px 0 0 8px}
+.stat:last-child{border-radius:0 8px 8px 0}
+.stat-num{font-size:22px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text)}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px}
+.stat-num.accent{color:var(--accent)}
+.stat-num.red{color:var(--red)}
+.stat-num.amber{color:var(--amber)}
+
+/* Table */
+.table-wrap{padding:16px 24px 80px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:10px 12px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.06em;font-weight:400;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s}
+tbody tr:hover{background:var(--surface)}
+td{padding:12px 12px;vertical-align:middle}
+
+.streamer-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);flex-shrink:0;font-family:'DM Mono',monospace}
+.streamer-name{font-weight:500;color:var(--text)}
+.client-name{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace}
+
+.type-tag{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+
+.copy-cell{max-width:200px}
+.copy-text{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;transition:color 0.15s}
+.copy-text:hover{color:var(--text)}
+.copy-expand{display:none;font-size:12px;color:var(--text);line-height:1.6;margin-top:4px;white-space:normal}
+
+.deadline-badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.dl-ok{background:var(--accent-dim);color:var(--accent)}
+.dl-warn{background:var(--amber-dim);color:var(--amber)}
+.dl-urgent{background:var(--red-dim);color:var(--red)}
+
+.status-badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.st-pending{background:var(--amber-dim);color:var(--amber)}
+.st-done{background:var(--accent-dim);color:var(--accent)}
+
+.action-cell{display:flex;align-items:center;gap:6px}
+.copy-link-btn{background:none;border:1px solid var(--border-hover);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.copy-link-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-link-btn.copied{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--accent);font-family:'DM Mono',monospace;transition:transform 0.3s;z-index:100;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Empty */
+.empty-row td{text-align:center;padding:48px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">ADMIN</div>
+  <div class="header-sub">素材管理後台</div>
+  <div class="header-badge" id="lastUpdate">載入中…</div>
+</div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span class="search-icon">⌕</span>
+    <input class="search-input" type="text" id="searchInput" placeholder="搜尋主播、大戶名稱…" oninput="applyFilter()">
+  </div>
+  <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
+  <button class="filter-btn" onclick="setFilter('pending', this)">待上傳</button>
+  <button class="filter-btn" onclick="setFilter('done', this)">已完成</button>
+  <button class="filter-btn" onclick="setFilter('urgent', this)">今明截止</button>
+</div>
+
+<div class="stats" id="statsRow">
+  <div class="stat"><div class="stat-num accent" id="statTotal">0</div><div class="stat-label">總需求數</div></div>
+  <div class="stat"><div class="stat-num amber" id="statPending">0</div><div class="stat-label">待上傳</div></div>
+  <div class="stat"><div class="stat-num accent" id="statDone">0</div><div class="stat-label">已完成</div></div>
+  <div class="stat"><div class="stat-num red" id="statUrgent">0</div><div class="stat-label">今明截止</div></div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>主播</th>
+        <th>大戶 / 類型</th>
+        <th>文案</th>
+        <th>截止日</th>
+        <th>狀態</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="toast" id="toast">連結已複製！</div>
+
+<script>
+// ── 截止日邏輯：需求建立日 + 5 天 ────────────────────────────
+const DEADLINE_DAYS = 5;
+const BASE_URL = 'https://lunayu0908.github.io/creator-upload';
+const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
+function calcDeadline(createdAt) {
+  const d = new Date(createdAt);
+  d.setDate(d.getDate() + DEADLINE_DAYS);
+  return d.toISOString().split('T')[0];
+}
+
+// ── 示範資料（串接 n8n 後自動替換）────────────────────────────
+const ALL_DEMANDS = [
+  { id:'d001', streamer:'50rabbit_150', token:'rabbit_a8f3k', client:'mshieh8888', type:'訂製禮物 Gift', copy:'來看兔兔幫 拳頭硬椰椰', createdAt: daysAgo(2), status:'pending' },
+  { id:'d002', streamer:'pinksweetbaby', token:'pink_j2m9x', client:'tonnyhung', type:'直播廣告欄位', copy:'葵葵帶你飛 ～飛高高哦～^_^', createdAt: daysAgo(1), status:'pending' },
+  { id:'d003', streamer:'50rabbit_150', token:'rabbit_a8f3k', client:'user_88321', type:'開台宣傳', copy:'今晚十點不見不散！兔兔要來大亂鬥囉', createdAt: daysAgo(4), status:'done' },
+  { id:'d004', streamer:'coco_live', token:'coco_p5q1z', client:'bigspender_vip', type:'週年特別活動', copy:'COCO一週年感謝祭，一起來慶祝！', createdAt: daysAgo(0), status:'pending' },
+  { id:'d005', streamer:'pinksweetbaby', token:'pink_j2m9x', client:'whale_007', type:'限定連麥活動', copy:'粉粉的夢幻連麥，今晚九點開始！', createdAt: daysAgo(3), status:'pending' }
+].map(d => ({ ...d, deadline: calcDeadline(d.createdAt) }));
+// ─────────────────────────────────────────────────────────────
+
+let currentFilter = 'all';
+let currentSearch = '';
+
+function daysLeft(deadline) {
+  return Math.ceil((new Date(deadline) - new Date()) / 86400000);
+}
+
+function deadlineClass(d) {
+  if (d <= 1) return 'dl-urgent';
+  if (d <= 3) return 'dl-warn';
+  return 'dl-ok';
+}
+
+function deadlineLabel(d, deadline) {
+  if (d <= 0) return '今天截止';
+  if (d === 1) return '明天截止';
+  return deadline;
+}
+
+function applyFilter() {
+  currentSearch = document.getElementById('searchInput').value.toLowerCase();
+  renderTable();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const body = document.getElementById('tableBody');
+  let data = ALL_DEMANDS.filter(d => {
+    const matchSearch = !currentSearch ||
+      d.streamer.toLowerCase().includes(currentSearch) ||
+      d.client.toLowerCase().includes(currentSearch) ||
+      d.type.toLowerCase().includes(currentSearch);
+    const dl = daysLeft(d.deadline);
+    const matchFilter =
+      currentFilter === 'all' ? true :
+      currentFilter === 'pending' ? d.status === 'pending' :
+      currentFilter === 'done' ? d.status === 'done' :
+      currentFilter === 'urgent' ? dl <= 1 : true;
+    return matchSearch && matchFilter;
+  });
+
+  // Stats
+  document.getElementById('statTotal').textContent = ALL_DEMANDS.length;
+  document.getElementById('statPending').textContent = ALL_DEMANDS.filter(d=>d.status==='pending').length;
+  document.getElementById('statDone').textContent = ALL_DEMANDS.filter(d=>d.status==='done').length;
+  document.getElementById('statUrgent').textContent = ALL_DEMANDS.filter(d=>daysLeft(d.deadline)<=1).length;
+
+  if (!data.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="6">◎ 沒有符合的需求</td></tr>';
+    return;
+  }
+
+  body.innerHTML = data.map(d => {
+    const dl = daysLeft(d.deadline);
+    const dlClass = deadlineClass(dl);
+    const dlLabel = deadlineLabel(dl, d.deadline);
+    const stClass = d.status === 'done' ? 'st-done' : 'st-pending';
+    const stLabel = d.status === 'done' ? '已完成' : '待上傳';
+    const av = d.streamer.charAt(0).toUpperCase();
+    const link = `${BASE_URL}?token=${d.token}`;
+
+    return `
+    <tr>
+      <td>
+        <div class="streamer-cell">
+          <div class="avatar">${av}</div>
+          <div>
+            <div class="streamer-name">${d.streamer}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="client-name">${d.client}</div>
+        <div class="type-tag" style="margin-top:4px">${d.type}</div>
+      </td>
+      <td class="copy-cell">
+        <div class="copy-text" onclick="toggleCopy('copy-${d.id}')">${d.copy}</div>
+        <div class="copy-expand" id="copy-${d.id}">${d.copy}</div>
+      </td>
+      <td><span class="deadline-badge ${dlClass}">${dlLabel}</span></td>
+      <td><span class="status-badge ${stClass}">${stLabel}</span></td>
+      <td class="action-cell">
+        <button class="copy-link-btn" id="btn-${d.id}" onclick="copyLink('${link}', '${d.id}')">複製連結</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('lastUpdate').textContent = '更新：' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+}
+
+function toggleCopy(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+function copyLink(link, id) {
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('btn-' + id);
+    btn.textContent = '已複製 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '複製連結'; btn.classList.remove('copied'); }, 2000);
+    showToast();
+  });
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+renderTable();
+</script>
+</body>
+</html>
