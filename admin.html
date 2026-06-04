@@ -275,6 +275,7 @@ function renderTable() {
     const stLabel = d.status === 'done' ? '已完成' : '待上傳';
     const av = d.streamer.charAt(0).toUpperCase();
     const link = `${BASE_URL}?token=${d.token}`;
+    const driveLink = d.drive_link ? (d.drive_link.includes('?') ? d.drive_link + '&export=download' : d.drive_link + '?export=download') : '';
 
     return `
     <tr>
@@ -298,8 +299,8 @@ function renderTable() {
       <td><span class="status-badge ${stClass}">${stLabel}</span></td>
       <td class="action-cell">
         <button class="copy-link-btn" id="btn-${d.id}" onclick="copyLink('${link}', '${d.id}')">上傳連結</button>
-        ${d.drive_link
-          ? `<a class="copy-link-btn drive-btn" href="${d.drive_link}" target="_blank">素材下載</a>`
+        ${driveLink
+          ? `<a class="copy-link-btn drive-btn" href="${driveLink}" target="_blank" download>素材下載</a>`
           : `<button class="copy-link-btn drive-btn disabled" disabled>素材下載</button>`
         }
       </td>
