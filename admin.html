@@ -189,24 +189,34 @@ td{padding:12px 12px;vertical-align:middle}
 <div class="toast" id="toast">上傳連結已複製！</div>
 
 <script>
-// ── 截止日邏輯：需求建立日 + 5 天 ────────────────────────────
-const DEADLINE_DAYS = 5;
-const BASE_URL = 'https://lunayu0908.github.io/creator-upload';
-const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString();
-function calcDeadline(createdAt) {
-  const d = new Date(createdAt);
-  d.setDate(d.getDate() + DEADLINE_DAYS);
-  return d.toISOString().split('T')[0];
-}
+// ── 真實資料來源 ────────────────────────────────────────────
+const N8N_GET_DEMANDS_URL = 'https://swagtalents.app.n8n.cloud/webhook/e21514d8-f84b-4564-8e3c-e980df12c84a';
 
-// ── 示範資料（串接 n8n 後自動替換）────────────────────────────
-const ALL_DEMANDS = [
-  { id:'d001', streamer:'50rabbit_150', token:'50rabbit_150', client:'mshieh8888', type:'訂製禮物 Gift', copy:'來看兔兔幫 拳頭硬椰椰', createdAt: daysAgo(2), status:'pending', drive_link:'' },
-  { id:'d002', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'tonnyhung', type:'直播廣告欄位', copy:'葵葵帶你飛 ～飛高高哦～^_^', createdAt: daysAgo(1), status:'pending', drive_link:'' },
-  { id:'d003', streamer:'50rabbit_150', token:'50rabbit_150', client:'user_88321', type:'開台宣傳', copy:'今晚十點不見不散！兔兔要來大亂鬥囉', createdAt: daysAgo(4), status:'done', drive_link:'https://drive.google.com/drive/folders/17wjMtg9YdcLgOGCT2RQj1YKOe1fNVgQ_' },
-  { id:'d004', streamer:'coco_live', token:'coco_live', client:'bigspender_vip', type:'週年特別活動', copy:'COCO一週年感謝祭，一起來慶祝！', createdAt: daysAgo(0), status:'pending', drive_link:'' },
-  { id:'d005', streamer:'pinksweetbaby', token:'pinksweetbaby', client:'whale_007', type:'限定連麥活動', copy:'粉粉的夢幻連麥，今晚九點開始！', createdAt: daysAgo(3), status:'pending', drive_link:'' }
-].map(d => ({ ...d, deadline: calcDeadline(d.createdAt) }));
+let ALL_DEMANDS = [];
+
+async function loadDemands() {
+  try {
+    const res = await fetch(N8N_GET_DEMANDS_URL);
+    const data = await res.json();
+    ALL_DEMANDS = data.map(d => ({
+      id: d.req_id,
+      streamer: d.creator_id,
+      token: d.creator_id,
+      client: d.client,
+      type: d.type,
+      copy: d.copy,
+      createdAt: d.created_at,
+      deadline: d.deadline,
+      status: d.status || 'pending',
+      drive_link: d.drive_link || '',
+      note: d.note || ''
+    }));
+  } catch (e) {
+    console.error('載入資料失敗', e);
+    ALL_DEMANDS = [];
+  }
+  renderTable();
+}
 // ─────────────────────────────────────────────────────────────
 
 let currentFilter = 'all';
@@ -331,7 +341,7 @@ function showToast() {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-renderTable();
+loadDemands();
 
 // ── Google OAuth 驗證 ─────────────────────────────────────────
 const ALLOWED_DOMAIN = 'swag.live';
