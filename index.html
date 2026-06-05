@@ -553,13 +553,12 @@ const DEMO_DEMANDS = [
 ].map(d => ({ ...d, deadline: calcDeadline(d.createdAt), daysLeft: calcDaysLeft(d.createdAt) }));
 // ─────────────────────────────────────────────────────────────
 
-const N8N_GET_DEMANDS_URL = ''; // 串接 n8n 後填入 Webhook URL
+const N8N_GET_DEMANDS_URL = 'https://swagtalents.app.n8n.cloud/webhook/e21514d8-f84b-4564-8e3c-e980df12c84a';
 
 let DEMANDS = [];
 let CURRENT_TOKEN = '';
 let CURRENT_STREAMER = '';
 
-// 讀取網址中的 token
 function getTokenFromURL() {
   const params = new URLSearchParams(window.location.search);
   return params.get('token') || '';
@@ -568,7 +567,6 @@ function getTokenFromURL() {
 async function loadDemands() {
   CURRENT_TOKEN = getTokenFromURL();
 
-  // 沒有 token → 顯示無效連結畫面
   if (!CURRENT_TOKEN) {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('invalidScreen').classList.add('show');
@@ -577,18 +575,22 @@ async function loadDemands() {
 
   let allDemands = [];
 
-  if (N8N_GET_DEMANDS_URL) {
-    try {
-      const res = await fetch(`${N8N_GET_DEMANDS_URL}?token=${CURRENT_TOKEN}`);
-      const data = await res.json();
-      allDemands = data.map(d => ({
-        ...d,
+  try {
+    const res = await fetch(N8N_GET_DEMANDS_URL);
+    const data = await res.json();
+    allDemands = data
+      .filter(d => d.status === 'pending')
+      .map(d => ({
+        id: d.req_id,
+        streamer: d.creator_id,
+        token: d.creator_id,
+        client: d.client,
+        type: d.type,
+        copy: d.copy,
+        deadline: d.deadline,
         daysLeft: Math.ceil((new Date(d.deadline) - new Date()) / 86400000)
       }));
-    } catch (e) {
-      allDemands = DEMO_DEMANDS;
-    }
-  } else {
+  } catch (e) {
     allDemands = DEMO_DEMANDS;
   }
 
@@ -596,7 +598,7 @@ async function loadDemands() {
   DEMANDS = allDemands.filter(d => d.token === CURRENT_TOKEN);
 
   // token 不存在或無對應需求 → 顯示無效連結
-  if (DEMANDS.length === 0 && N8N_GET_DEMANDS_URL) {
+  if (DEMANDS.length === 0) {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('invalidScreen').classList.add('show');
     return;
