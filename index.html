@@ -530,6 +530,14 @@
   <div class="invalid-sub">此連結已失效或不存在<br>請聯繫工作人員取得新的上傳連結</div>
 </div>
 
+<div class="invalid-screen" id="emptyScreen">
+  <div class="invalid-icon" style="background:var(--accent-dim);border-color:var(--accent)">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D2BE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  </div>
+  <div class="invalid-title" style="color:var(--accent)">目前無需要提供的素材</div>
+  <div class="invalid-sub">如有新需求我們會再通知您</div>
+</div>
+
 <script>
 // ── 截止日邏輯：需求建立日 + 5 天 ────────────────────────────
 const DEADLINE_DAYS = 5;
@@ -597,10 +605,10 @@ async function loadDemands() {
   // 只篩選出對應 token 的主播需求
   DEMANDS = allDemands.filter(d => d.token === CURRENT_TOKEN);
 
-  // token 不存在或無對應需求 → 顯示無效連結
+  // 有 token 但沒有對應需求 → 顯示「目前無需要提供的素材」
   if (DEMANDS.length === 0) {
     document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('invalidScreen').classList.add('show');
+    document.getElementById('emptyScreen').classList.add('show');
     return;
   }
 
