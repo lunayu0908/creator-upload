@@ -581,7 +581,21 @@ async function loadDemands() {
     return;
   }
 
-  let allDemands = [];
+  // 先驗證主播是否存在
+  try {
+    const creatorRes = await fetch(
+      'https://creator-info-f2327.web.app/api/v1/check-creator?userId=' + encodeURIComponent(CURRENT_TOKEN),
+      { headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJraWQiOiJEem9BZmpKdndsZmdPWmlTOTZyWCIsIm5hbWUiOiLntKDmnZDkuIrlgrPpoIHpnaIg5p-l6Kmi5Li75pKtIiwidHlwZSI6ImFwaV9rZXkiLCJpYXQiOjE3ODA1NDk5MDB9.DYGNJDEK5p-HwKsu2riiHoUfA0x3Ci-27dnmPneCYIo' } }
+    );
+    const creatorData = await creatorRes.json();
+    if (!creatorData || creatorData.found !== true) {
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('invalidScreen').classList.add('show');
+      return;
+    }
+  } catch (e) {
+    // 驗證 API 失敗時繼續執行，不阻擋流程
+  }
 
   try {
     const res = await fetch(N8N_GET_DEMANDS_URL);
