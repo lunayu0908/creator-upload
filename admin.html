@@ -284,7 +284,7 @@ function renderTable() {
     const stClass = d.status === 'done' ? 'st-done' : 'st-pending';
     const stLabel = d.status === 'done' ? '已完成' : '待上傳';
     const av = d.streamer.charAt(0).toUpperCase();
-    const link = `${BASE_URL}#token=${d.token}`;
+    const link = `${BASE_URL}?token=${d.token}`;
     const driveLink = d.drive_link ? (d.drive_link.includes('?') ? d.drive_link + '&export=download' : d.drive_link + '?export=download') : '';
 
     return `
