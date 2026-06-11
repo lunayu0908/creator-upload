@@ -568,9 +568,8 @@ let CURRENT_TOKEN = '';
 let CURRENT_STREAMER = '';
 
 function getTokenFromURL() {
-  const hash = window.location.hash.slice(1);
-  const hashParams = new URLSearchParams(hash);
-  return hashParams.get('token') || '';
+  const params = new URLSearchParams(window.location.search);
+  return params.get('token') || '';
 }
 
 async function loadDemands() {
