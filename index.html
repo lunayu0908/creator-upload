@@ -486,7 +486,11 @@
     <div class="count-badge">已選 <span id="selCount">0</span> / <span id="totalCount">0</span></div>
   </div>
 
-  <div class="cards" id="cardList"></div>
+<div id="loadingState" style="padding:40px 0; text-align:center; color:var(--muted); font-size:13px; letter-spacing:0.06em;">
+  資料載入中...
+</div>
+<div class="cards" id="cardList"></div>
+  
   <div class="empty" id="emptyState"><div class="empty-icon">◎</div>目前沒有待處理的需求</div>
 
   <div class="upload-section disabled" id="uploadSection">
@@ -574,12 +578,15 @@ function getTokenFromURL() {
 
 async function loadDemands() {
   CURRENT_TOKEN = getTokenFromURL();
-
   if (!CURRENT_TOKEN) {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('invalidScreen').classList.add('show');
     return;
   }
+
+  // 顯示 loading
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('cardList').style.display = 'none';
 
   // 先驗證主播是否存在
   try {
@@ -597,7 +604,7 @@ async function loadDemands() {
     // 驗證 API 失敗時繼續執行，不阻擋流程
   }
 
-try {
+  try {
     const res = await fetch(N8N_GET_DEMANDS_URL);
     const data = await res.json();
     allDemands = data.data
@@ -616,22 +623,20 @@ try {
     allDemands = DEMO_DEMANDS;
   }
 
-  // 只篩選出對應 token 的主播需求
-  DEMANDS = allDemands.filter(d => d.token === CURRENT_TOKEN);
+  // 隱藏 loading，顯示卡片
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('cardList').style.display = 'block';
 
-  // 有 token 但沒有對應需求 → 顯示「目前無需要提供的素材」
+  DEMANDS = allDemands.filter(d => d.token === CURRENT_TOKEN);
   if (DEMANDS.length === 0) {
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('emptyScreen').classList.add('show');
     return;
   }
-
-  // 取得主播名稱顯示在 header
   if (DEMANDS.length > 0) {
     CURRENT_STREAMER = DEMANDS[0].streamer;
     document.getElementById('headerStreamer').textContent = CURRENT_STREAMER;
   }
-
   filtered = [...DEMANDS];
   renderCards();
 }
