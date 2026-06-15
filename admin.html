@@ -198,7 +198,7 @@ async function loadDemands() {
   try {
     const res = await fetch(N8N_GET_DEMANDS_URL);
     const data = await res.json();
-    ALL_DEMANDS = data.map(d => ({
+    ALL_DEMANDS = data.data.map(d => ({
       id: d.req_id,
       streamer: d.creator_id,
       token: d.creator_id,
