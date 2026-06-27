@@ -36,7 +36,7 @@
   /* Header */
   .header {
     padding: 28px 28px 20px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px sol var(--border);
     display: flex;
     align-items: baseline;
     gap: 12px;
@@ -59,7 +59,7 @@
     top: 0;
     background: var(--bg);
     z-index: 10;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px sol var(--border);
   }
   .search-box {
     display: flex;
@@ -791,7 +791,7 @@ function submit() {
       const formData = new FormData();
       const note = document.getElementById('noteInput').value.trim();
       formData.append('file', file);
-      formData.append('streamer_id', demand.streamer);
+      formData.append('creator_id', demand.streamer);
       formData.append('req_id', demand.id);
       formData.append('client', demand.client);
       formData.append('type', demand.type);
