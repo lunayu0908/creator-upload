@@ -608,7 +608,7 @@ async function loadDemands() {
     const res = await fetch(N8N_GET_DEMANDS_URL);
     const data = await res.json();
     allDemands = data.data
-      .filter(d => d.status === 'pending')
+      .filter(d => d.status !== 'done')
       .map(d => ({
         id: d.req_id,
         streamer: d.creator_id,
