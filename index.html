@@ -608,7 +608,7 @@ async function loadDemands() {
     const res = await fetch(N8N_GET_DEMANDS_URL);
     const data = await res.json();
     allDemands = data.data
-      .filter(d => d.status !== 'done')
+      .filter(d => d.status === 'pending')
       .map(d => ({
         id: d.req_id,
         streamer: d.creator_id,
@@ -776,7 +776,32 @@ function checkSubmit() {
   document.getElementById('submitBtn').disabled = !(selected.size > 0 && files.length > 0);
 }
 
-function submit() {
+function compressImage(file, maxSizeMB = 2) {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/') || file.type === 'image/heic' || file.type === 'image/heif') {
+      resolve(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, Math.sqrt((maxSizeMB * 1024 * 1024) / file.size));
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.85);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submit() {
   const sel = [...selected].map(id => DEMANDS.find(d => d.id === id)).filter(Boolean);
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = true;
@@ -784,20 +809,20 @@ function submit() {
 
   const N8N_WEBHOOK = 'https://swagtalents.app.n8n.cloud/webhook/f8578d8c-41f7-41cd-83df-7c7e4d8d7dfc';
 
-  // 每個選取的需求 × 每個檔案都各送一次
   const uploads = [];
   for (const demand of sel) {
     for (const file of files) {
+      const compressed = await compressImage(file);
       const formData = new FormData();
       const note = document.getElementById('noteInput').value.trim();
-      formData.append('file', file);
+      formData.append('file', compressed);
       formData.append('creator_id', demand.streamer);
       formData.append('req_id', demand.id);
       formData.append('client', demand.client);
       formData.append('type', demand.type);
       formData.append('copy', demand.copy);
       formData.append('deadline', demand.deadline);
-      formData.append('file_name', file.name);
+      formData.append('file_name', compressed.name);
       formData.append('note', note);
       uploads.push(fetch(N8N_WEBHOOK, { method: 'POST', body: formData }));
     }
