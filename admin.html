@@ -160,7 +160,7 @@ td{padding:12px 12px;vertical-align:middle}
   <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
   <button class="filter-btn" onclick="setFilter('pending', this)">待上傳</button>
   <button class="filter-btn" onclick="setFilter('done', this)">已完成</button>
-  <button class="filter-btn" onclick="setFilter('urgent', this)">今明截止</button>
+  <button class="filter-btn" onclick="setFilter('urgent', this)">5天內截止</button>
 </div>
 
 <div class="stats" id="statsRow">
@@ -236,8 +236,8 @@ function daysLeft(deadline) {
 }
 
 function deadlineClass(d) {
-  if (d <= 1) return 'dl-urgent';
-  if (d <= 3) return 'dl-warn';
+  if (d <= 5) return 'dl-urgent';
+  if (d <= 10) return 'dl-warn';
   return 'dl-ok';
 }
 
@@ -271,7 +271,7 @@ function renderTable() {
       currentFilter === 'all' ? true :
       currentFilter === 'pending' ? d.status === 'pending' :
       currentFilter === 'done' ? d.status === 'done' :
-      currentFilter === 'urgent' ? dl <= 1 : true;
+      currentFilter === 'urgent' ? dl <= 5 : true;
     return matchSearch && matchFilter;
   });
 
@@ -279,7 +279,7 @@ function renderTable() {
   document.getElementById('statTotal').textContent = ALL_DEMANDS.length;
   document.getElementById('statPending').textContent = ALL_DEMANDS.filter(d=>d.status==='pending').length;
   document.getElementById('statDone').textContent = ALL_DEMANDS.filter(d=>d.status==='done').length;
-  document.getElementById('statUrgent').textContent = ALL_DEMANDS.filter(d=>daysLeft(d.deadline)<=1).length;
+  document.getElementById('statUrgent').textContent = ALL_DEMANDS.filter(d=>daysLeft(d.deadline)<=5).length;
 
   if (!data.length) {
     body.innerHTML = '<tr class="empty-row"><td colspan="6">◎ 沒有符合的需求</td></tr>';
