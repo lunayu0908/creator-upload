@@ -85,6 +85,7 @@ td{padding:12px 12px;vertical-align:middle}
 .status-badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px;white-space:nowrap}
 .st-pending{background:var(--amber-dim);color:var(--amber)}
 .st-done{background:var(--accent-dim);color:var(--accent)}
+.st-canceled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.3)}
 
 .action-cell{display:flex;align-items:center;gap:6px}
 .copy-link-btn{background:none;border:1px solid var(--border-hover);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap}
@@ -160,6 +161,7 @@ td{padding:12px 12px;vertical-align:middle}
   <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
   <button class="filter-btn" onclick="setFilter('pending', this)">待上傳</button>
   <button class="filter-btn" onclick="setFilter('done', this)">已完成</button>
+  <button class="filter-btn" onclick="setFilter('canceled', this)">已取消</button>
   <button class="filter-btn" onclick="setFilter('urgent', this)">5天內截止</button>
 </div>
 
@@ -271,6 +273,7 @@ function renderTable() {
       currentFilter === 'all' ? true :
       currentFilter === 'pending' ? d.status === 'pending' :
       currentFilter === 'done' ? d.status === 'done' :
+      currentFilter === 'canceled' ? d.status === 'canceled' :
       currentFilter === 'urgent' ? dl <= 5 : true;
     return matchSearch && matchFilter;
   });
@@ -290,8 +293,8 @@ function renderTable() {
     const dl = daysLeft(d.deadline);
     const dlClass = deadlineClass(dl);
     const dlLabel = deadlineLabel(dl, d.deadline);
-    const stClass = d.status === 'done' ? 'st-done' : 'st-pending';
-    const stLabel = d.status === 'done' ? '已完成' : '待上傳';
+    const stClass = d.status === 'done' ? 'st-done' : d.status === 'canceled' ? 'st-canceled' : 'st-pending';
+    const stLabel = d.status === 'done' ? '已完成' : d.status === 'canceled' ? '已取消' : '待上傳';
     const av = d.streamer.charAt(0).toUpperCase();
     const link = `${BASE_URL}?token=${d.token}`;
     const driveLink = d.drive_link ? (d.drive_link.includes('?') ? d.drive_link + '&export=download' : d.drive_link + '?export=download') : '';
