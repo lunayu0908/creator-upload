@@ -81,6 +81,7 @@ td{padding:12px 12px;vertical-align:middle}
 .dl-ok{background:var(--accent-dim);color:var(--accent)}
 .dl-warn{background:var(--amber-dim);color:var(--amber)}
 .dl-urgent{background:var(--red-dim);color:var(--red)}
+.st-expired{background:rgba(255,95,95,0.15);color:#ff5f5f}
 
 .status-badge{font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px;white-space:nowrap}
 .st-pending{background:var(--amber-dim);color:var(--amber)}
@@ -162,6 +163,7 @@ td{padding:12px 12px;vertical-align:middle}
   <button class="filter-btn" onclick="setFilter('pending', this)">待上傳</button>
   <button class="filter-btn" onclick="setFilter('done', this)">已完成</button>
   <button class="filter-btn" onclick="setFilter('canceled', this)">已取消</button>
+  <button class="filter-btn" onclick="setFilter('expired', this)">已逾期</button>
   <button class="filter-btn" onclick="setFilter('urgent', this)">5天內截止</button>
 </div>
 
@@ -238,8 +240,8 @@ function daysLeft(deadline) {
 }
 
 function deadlineClass(d) {
-  if (d <= 5) return 'dl-urgent';
-  if (d <= 10) return 'dl-warn';
+  if (d <= 3) return 'dl-urgent';
+  if (d <= 7) return 'dl-warn';
   return 'dl-ok';
 }
 
@@ -271,16 +273,17 @@ function renderTable() {
     const dl = daysLeft(d.deadline);
     const matchFilter =
       currentFilter === 'all' ? true :
-      currentFilter === 'pending' ? (d.status === 'pending' || d.status === 'notified') :
+      currentFilter === 'pending' ? (d.status === 'pending' || d.status === 'notified' || d.status === 'expired') :
       currentFilter === 'done' ? d.status === 'done' :
       currentFilter === 'canceled' ? d.status === 'canceled' :
+      currentFilter === 'expired' ? d.status === 'expired' :
       currentFilter === 'urgent' ? dl <= 5 : true;
     return matchSearch && matchFilter;
   });
 
   // Stats
   document.getElementById('statTotal').textContent = ALL_DEMANDS.length;
-  document.getElementById('statPending').textContent = ALL_DEMANDS.filter(d=>d.status==='pending' || d.status==='notified').length;
+  document.getElementById('statPending').textContent = ALL_DEMANDS.filter(d=>d.status==='pending' || d.status==='notified' || d.status==='expired').length;
   document.getElementById('statDone').textContent = ALL_DEMANDS.filter(d=>d.status==='done').length;
   document.getElementById('statUrgent').textContent = ALL_DEMANDS.filter(d=>daysLeft(d.deadline)<=5).length;
 
@@ -293,8 +296,8 @@ function renderTable() {
     const dl = daysLeft(d.deadline);
     const dlClass = deadlineClass(dl);
     const dlLabel = deadlineLabel(dl, d.deadline);
-    const stClass = d.status === 'done' ? 'st-done' : d.status === 'canceled' ? 'st-canceled' : 'st-pending';
-    const stLabel = d.status === 'done' ? '已完成' : d.status === 'canceled' ? '已取消' : d.status === 'notified' ? '已通知' : '待上傳';
+    const stClass = d.status === 'done' ? 'st-done' : d.status === 'canceled' ? 'st-canceled' : d.status === 'expired' ? 'st-expired' : 'st-pending';
+    const stLabel = d.status === 'done' ? '已完成' : d.status === 'canceled' ? '已取消' : d.status === 'expired' ? '已逾期' : d.status === 'notified' ? '已通知' : '待上傳';
     const av = d.streamer.charAt(0).toUpperCase();
     const link = `${BASE_URL}?token=${d.token}`;
     const driveLink = d.drive_link ? (d.drive_link.includes('?') ? d.drive_link + '&export=download' : d.drive_link + '?export=download') : '';

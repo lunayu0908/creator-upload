@@ -647,8 +647,9 @@ let files = [];
 let filtered = [...DEMANDS];
 
 function deadlinePill(d) {
-  if (d.daysLeft <= 5) return `<span class="deadline-pill deadline-urgent">${d.daysLeft <= 1 ? '今明截止' : d.daysLeft + '天後截止'}</span>`;
-  if (d.daysLeft <= 10) return `<span class="deadline-pill deadline-warn">${d.daysLeft}天後截止</span>`;
+  if (d.status === 'expired') return `<span class="deadline-pill deadline-urgent">已逾期</span>`;
+  if (d.daysLeft <= 3) return `<span class="deadline-pill deadline-urgent">${d.daysLeft <= 1 ? '今明截止' : d.daysLeft + '天後截止'}</span>`;
+  if (d.daysLeft <= 7) return `<span class="deadline-pill deadline-warn">${d.daysLeft}天後截止</span>`;
   return `<span class="deadline-pill deadline-ok">${d.daysLeft}天後截止</span>`;
 }
 
