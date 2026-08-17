@@ -88,6 +88,8 @@ td{padding:12px 12px;vertical-align:middle}
 .st-done{background:var(--accent-dim);color:var(--accent)}
 .st-canceled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.3)}
 
+.rejected-tag{font-size:11px;font-family:'DM Mono',monospace;color:var(--red);margin-left:6px;white-space:nowrap}
+
 .action-cell{display:flex;align-items:center;gap:6px}
 .copy-link-btn{background:none;border:1px solid var(--border-hover);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.15s;white-space:nowrap}
 .copy-link-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -165,6 +167,7 @@ td{padding:12px 12px;vertical-align:middle}
   <button class="filter-btn" onclick="setFilter('canceled', this)">已取消</button>
   <button class="filter-btn" onclick="setFilter('expired', this)">已逾期</button>
   <button class="filter-btn" onclick="setFilter('urgent', this)">5天內截止</button>
+  <button class="filter-btn" onclick="setFilter('rejected', this)">已拒絕</button>
 </div>
 
 <div class="stats" id="statsRow">
@@ -220,7 +223,8 @@ async function loadDemands() {
       deadline: d.deadline,
       status: d.status || 'pending',
       drive_link: d.drive_link || '',
-      note: d.note || ''
+      note: d.note || '',
+      rejected: d.rejected === true || d.rejected === 'true' || d.rejected === 'TRUE'
     }));
   } catch (e) {
     console.error('載入資料失敗', e);
@@ -277,7 +281,8 @@ function renderTable() {
       currentFilter === 'done' ? d.status === 'done' :
       currentFilter === 'canceled' ? d.status === 'canceled' :
       currentFilter === 'expired' ? d.status === 'expired' :
-      currentFilter === 'urgent' ? dl <= 5 : true;
+      currentFilter === 'urgent' ? dl <= 5 :
+      currentFilter === 'rejected' ? d.rejected === true : true;
     return matchSearch && matchFilter;
   });
 
@@ -321,7 +326,7 @@ function renderTable() {
         <div class="copy-expand" id="copy-${d.id}">${d.copy}</div>
       </td>
       <td><span class="deadline-badge ${dlClass}">${dlLabel}</span></td>
-      <td><span class="status-badge ${stClass}">${stLabel}</span></td>
+      <td><span class="status-badge ${stClass}">${stLabel}</span>${d.rejected ? '<span class="rejected-tag">· 已拒絕</span>' : ''}</td>
       <td class="action-cell">
         <button class="copy-link-btn" id="btn-${d.id}" onclick="copyLink('${link}', '${d.id}')">上傳連結</button>
         ${driveLink

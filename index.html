@@ -415,6 +415,16 @@
   }
   .again-btn:hover { color: var(--text); border-color: var(--text); }
 
+  /* 放棄曝光勾選 */
+  .reject-wrap { margin: 12px 12px 0; padding: 12px 14px; background: var(--red-dim); border: 1px solid rgba(255,95,95,0.25); border-radius: 8px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: border-color 0.2s; }
+  .reject-wrap:hover { border-color: rgba(255,95,95,0.5); }
+  .reject-checkbox { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--red); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; background: transparent; transition: background 0.15s; }
+  .reject-checkbox svg { display: none; }
+  .reject-wrap.checked .reject-checkbox { background: var(--red); }
+  .reject-wrap.checked .reject-checkbox svg { display: block; }
+  .reject-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .reject-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
   /* 備注欄位 */
   .note-wrap { padding: 0 12px 14px; }
   .note-label { display:block; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); margin-bottom:6px; letter-spacing:0.06em; }
@@ -505,6 +515,15 @@
     </div>
     <input type="file" id="fileInput" style="display:none" multiple accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.heic,.heif" onchange="addFiles(this.files)">
     <div class="file-list" id="fileList"></div>
+    <div class="reject-wrap" id="rejectWrap" onclick="toggleReject()">
+      <div class="reject-checkbox" id="rejectCheckbox">
+        <svg width="11" height="8" viewBox="0 0 11 8" fill="none" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 4 7 10 1"/></svg>
+      </div>
+      <div>
+        <div class="reject-text">我想要放棄本次曝光</div>
+        <div class="reject-hint">勾選後將不需上傳素材，直接送出即可</div>
+      </div>
+    </div>
     <div class="note-wrap">
       <label class="note-label">備注 <span class="note-optional">選填</span></label>
       <textarea class="note-input" id="noteInput" placeholder="例如：圖片不要蓋到頭部、標語放在胸口下方、左肩加小圖案…"></textarea>
@@ -520,8 +539,8 @@
   <div class="success-icon">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D2BE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
-  <div class="success-title">素材已送出</div>
-  <div class="success-sub">感謝您，我們已收到您的素材<br>如有需要我們會再與您聯繫</div>
+  <div class="success-title" id="successTitle">素材已送出</div>
+  <div class="success-sub" id="successSub">感謝您，我們已收到您的素材<br>如有需要我們會再與您聯繫</div>
   <div class="success-detail" id="successDetail"></div>
   <button class="again-btn" onclick="reset()">繼續上傳其他素材</button>
 </div>
@@ -645,6 +664,22 @@ async function loadDemands() {
 let selected = new Set();
 let files = [];
 let filtered = [...DEMANDS];
+let rejectChecked = false;
+
+function toggleReject() {
+  rejectChecked = !rejectChecked;
+  const wrap = document.getElementById('rejectWrap');
+  const dropZone = document.getElementById('dropZone');
+  wrap.classList.toggle('checked', rejectChecked);
+  if (rejectChecked) {
+    dropZone.style.opacity = '0.35';
+    dropZone.style.pointerEvents = 'none';
+  } else {
+    dropZone.style.opacity = '1';
+    dropZone.style.pointerEvents = 'auto';
+  }
+  checkSubmit();
+}
 
 function deadlinePill(d) {
   if (d.status === 'expired') return `<span class="deadline-pill deadline-urgent">已逾期</span>`;
@@ -774,7 +809,7 @@ function rmFile(i) {
 }
 
 function checkSubmit() {
-  document.getElementById('submitBtn').disabled = !(selected.size > 0 && files.length > 0);
+  document.getElementById('submitBtn').disabled = !(selected.size > 0 && (files.length > 0 || rejectChecked));
 }
 
 function compressImage(file, maxSizeMB = 2) {
@@ -806,46 +841,76 @@ async function submit() {
   const sel = [...selected].map(id => DEMANDS.find(d => d.id === id)).filter(Boolean);
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = true;
-  submitBtn.textContent = '上傳中…';
+  submitBtn.textContent = rejectChecked ? '送出中…' : '上傳中…';
 
   const N8N_WEBHOOK = 'https://swagtalents.app.n8n.cloud/webhook/f8578d8c-41f7-41cd-83df-7c7e4d8d7dfc';
+  const note = document.getElementById('noteInput').value.trim();
 
   const uploads = [];
-  for (const demand of sel) {
-    for (const file of files) {
-      const compressed = await compressImage(file);
+
+  if (rejectChecked) {
+    // 放棄曝光：不夾帶檔案，只標記 rejected，狀態欄位不變
+    for (const demand of sel) {
       const formData = new FormData();
-      const note = document.getElementById('noteInput').value.trim();
-      formData.append('file', compressed);
       formData.append('creator_id', demand.streamer);
       formData.append('req_id', demand.id);
       formData.append('client', demand.client);
       formData.append('type', demand.type);
       formData.append('copy', demand.copy);
       formData.append('deadline', demand.deadline);
-      formData.append('file_name', compressed.name);
       formData.append('note', note);
+      formData.append('rejected', 'true');
       uploads.push(fetch(N8N_WEBHOOK, { method: 'POST', body: formData }));
+    }
+  } else {
+    for (const demand of sel) {
+      for (const file of files) {
+        const compressed = await compressImage(file);
+        const formData = new FormData();
+        formData.append('file', compressed);
+        formData.append('creator_id', demand.streamer);
+        formData.append('req_id', demand.id);
+        formData.append('client', demand.client);
+        formData.append('type', demand.type);
+        formData.append('copy', demand.copy);
+        formData.append('deadline', demand.deadline);
+        formData.append('file_name', compressed.name);
+        formData.append('note', note);
+        formData.append('rejected', 'false');
+        uploads.push(fetch(N8N_WEBHOOK, { method: 'POST', body: formData }));
+      }
     }
   }
 
   Promise.all(uploads)
     .then(() => {
       const detail = document.getElementById('successDetail');
-      detail.innerHTML = `
-        <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
-        <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
-        <div class="success-detail-row"><span class="key">檔案數量</span><span class="val">${files.length} 個</span></div>
-        <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
-      `;
+      if (rejectChecked) {
+        detail.innerHTML = `
+          <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
+          <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
+          <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+        `;
+        document.getElementById('successTitle') && (document.getElementById('successTitle').textContent = '已收到您的回覆');
+        document.getElementById('successSub') && (document.getElementById('successSub').innerHTML = '感謝您的回覆，我們已記錄此次意願<br>如有需要我們會再與您聯繫');
+      } else {
+        detail.innerHTML = `
+          <div class="success-detail-row"><span class="key">需求數量</span><span class="val">${sel.length} 個</span></div>
+          <div class="success-detail-row"><span class="key">主播</span><span class="val">${[...new Set(sel.map(d=>d.streamer))].join('、')}</span></div>
+          <div class="success-detail-row"><span class="key">檔案數量</span><span class="val">${files.length} 個</span></div>
+          <div class="success-detail-row"><span class="key">送出時間</span><span class="val">${new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span></div>
+        `;
+        document.getElementById('successTitle') && (document.getElementById('successTitle').textContent = '素材已送出');
+        document.getElementById('successSub') && (document.getElementById('successSub').innerHTML = '感謝您，我們已收到您的素材<br>如有需要我們會再與您聯繫');
+      }
       document.getElementById('mainContent').classList.add('hidden');
       document.getElementById('successScreen').classList.add('show');
       document.getElementById('step3').classList.add('active');
     })
     .catch(() => {
       submitBtn.disabled = false;
-      submitBtn.textContent = '送出素材';
-      alert('上傳失敗，請稍後再試');
+      submitBtn.textContent = rejectChecked ? '送出' : '送出素材';
+      alert(rejectChecked ? '送出失敗，請稍後再試' : '上傳失敗，請稍後再試');
     });
 }
 
@@ -853,6 +918,10 @@ function reset() {
   selected.clear();
   files = [];
   filtered = [...DEMANDS];
+  rejectChecked = false;
+  document.getElementById('rejectWrap').classList.remove('checked');
+  document.getElementById('dropZone').style.opacity = '1';
+  document.getElementById('dropZone').style.pointerEvents = 'auto';
   document.getElementById('searchInput') && (document.getElementById('searchInput').value = '');
   document.getElementById('noteInput').value = '';
   document.getElementById('mainContent').classList.remove('hidden');
@@ -861,6 +930,7 @@ function reset() {
   document.getElementById('step2').classList.remove('active');
   document.getElementById('step3').classList.remove('active');
   updateUI();
+  renderFiles();
   renderCards();
 }
 
